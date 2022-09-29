@@ -5,7 +5,7 @@
 	<key>CFBundleExecutable</key>
 	<string>usecase</string>
 	<key>CFBundleIdentifier</key>
-	<string>io.github.pedrofraca.domain.usecase.usecase</string>
+	<string>io.github.pedrofraca.usecase</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

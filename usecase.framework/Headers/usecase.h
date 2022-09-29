@@ -6,9 +6,9 @@
 #import <Foundation/NSString.h>
 #import <Foundation/NSValue.h>
 
-@class UsecaseDomainStage, UsecaseDataSetStageAsFavoriteParam, UsecaseDomainRankeableStage;
+@class UsecaseDomainStage, UsecaseStagesRepositoryImpl, UsecaseSetStageAsFavoriteParam, UsecaseDomainRankeableStage, UsecaseDomainStageClassification, UsecaseDomainClassification;
 
-@protocol UsecaseGetStagesUseCase, UsecaseDataStageRepository, UsecaseSetStageAsFavoriteUseCase, UsecaseDataFavouritesRepository, UsecaseGetTopRankedStagesUseCase, UsecaseDataRankeableStageRepository;
+@protocol UsecaseReadOnlyDataSource, UsecaseReadOnlyDataSourceWithFilter, UsecaseWriteDataSource, UsecaseStageRepository, UsecaseFavouritesRepository, UsecaseRankeableStageRepository, UsecaseClassificationRepository, UsecaseWriteDataSourceWithFilter, UsecaseGetStagesUseCase, UsecaseSetStageAsFavoriteUseCase, UsecaseGetTopRankedStagesUseCase;
 
 NS_ASSUME_NONNULL_BEGIN
 #pragma clang diagnostic push
@@ -144,6 +144,117 @@ __attribute__((swift_name("KotlinBoolean")))
 + (instancetype)numberWithBool:(BOOL)value;
 @end;
 
+__attribute__((swift_name("ReadOnlyDataSource")))
+@protocol UsecaseReadOnlyDataSource
+@required
+- (NSArray<id> *)getAll __attribute__((swift_name("getAll()")));
+@end;
+
+__attribute__((swift_name("ReadOnlyDataSourceWithFilter")))
+@protocol UsecaseReadOnlyDataSourceWithFilter <UsecaseReadOnlyDataSource>
+@required
+- (id _Nullable)getParam:(id _Nullable)param __attribute__((swift_name("get(param:)")));
+@end;
+
+__attribute__((swift_name("WriteDataSource")))
+@protocol UsecaseWriteDataSource <UsecaseReadOnlyDataSource>
+@required
+- (BOOL)saveItem:(id _Nullable)item __attribute__((swift_name("save(item:)")));
+@end;
+
+__attribute__((swift_name("WriteDataSourceWithFilter")))
+@protocol UsecaseWriteDataSourceWithFilter <UsecaseReadOnlyDataSourceWithFilter>
+@required
+- (BOOL)saveItem:(id _Nullable)item param:(id _Nullable)param __attribute__((swift_name("save(item:param:)")));
+@end;
+
+__attribute__((swift_name("StageRepository")))
+@protocol UsecaseStageRepository
+@required
+- (UsecaseDomainStage * _Nullable)getStageByIdStageId:(int32_t)stageId __attribute__((swift_name("getStageById(stageId:)")));
+- (NSArray<UsecaseDomainStage *> *)refresh __attribute__((swift_name("refresh()")));
+@property (readonly) NSArray<UsecaseDomainStage *> *stages __attribute__((swift_name("stages")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("StagesRepositoryFactory")))
+@interface UsecaseStagesRepositoryFactory : UsecaseBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (UsecaseStagesRepositoryImpl *)buildApiDataSource:(id<UsecaseReadOnlyDataSource>)apiDataSource databaseDataSource:(id<UsecaseWriteDataSource>)databaseDataSource __attribute__((swift_name("build(apiDataSource:databaseDataSource:)")));
+@end;
+
+__attribute__((swift_name("StagesRepositoryImpl")))
+@interface UsecaseStagesRepositoryImpl : UsecaseBase <UsecaseStageRepository>
+- (instancetype)initWithReadDataSource:(id<UsecaseReadOnlyDataSource>)readDataSource persistenceDataSource:(id<UsecaseWriteDataSource>)persistenceDataSource __attribute__((swift_name("init(readDataSource:persistenceDataSource:)"))) __attribute__((objc_designated_initializer));
+- (UsecaseDomainStage * _Nullable)getStageByIdStageId:(int32_t)stageId __attribute__((swift_name("getStageById(stageId:)")));
+- (NSArray<UsecaseDomainStage *> *)refresh __attribute__((swift_name("refresh()")));
+@property (readonly) NSArray<UsecaseDomainStage *> *stages __attribute__((swift_name("stages")));
+@end;
+
+__attribute__((swift_name("FavouritesRepository")))
+@protocol UsecaseFavouritesRepository
+@required
+- (NSArray<UsecaseSetStageAsFavoriteParam *> *)getFavouriteStagesByUsernameUsername:(NSString *)username __attribute__((swift_name("getFavouriteStagesByUsername(username:)")));
+- (UsecaseSetStageAsFavoriteParam * _Nullable)getStageByUsernameStageId:(int32_t)stageId username:(NSString *)username __attribute__((swift_name("getStageByUsername(stageId:username:)")));
+- (BOOL)setFavouriteStageParam:(UsecaseSetStageAsFavoriteParam *)param __attribute__((swift_name("setFavouriteStage(param:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("FavouritesRepositoryImpl")))
+@interface UsecaseFavouritesRepositoryImpl : UsecaseBase <UsecaseFavouritesRepository>
+- (instancetype)initWithSetFavouriteApi:(id<UsecaseWriteDataSource>)setFavouriteApi favouritesListApi:(id<UsecaseReadOnlyDataSourceWithFilter>)favouritesListApi __attribute__((swift_name("init(setFavouriteApi:favouritesListApi:)"))) __attribute__((objc_designated_initializer));
+- (NSArray<UsecaseSetStageAsFavoriteParam *> *)getFavouriteStagesByUsernameUsername:(NSString *)username __attribute__((swift_name("getFavouriteStagesByUsername(username:)")));
+- (UsecaseSetStageAsFavoriteParam * _Nullable)getStageByUsernameStageId:(int32_t)stageId username:(NSString *)username __attribute__((swift_name("getStageByUsername(stageId:username:)")));
+- (BOOL)setFavouriteStageParam:(UsecaseSetStageAsFavoriteParam *)param __attribute__((swift_name("setFavouriteStage(param:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("SetStageAsFavoriteParam")))
+@interface UsecaseSetStageAsFavoriteParam : UsecaseBase
+- (instancetype)initWithUsername:(NSString *)username stageId:(int32_t)stageId favouriteState:(BOOL)favouriteState __attribute__((swift_name("init(username:stageId:favouriteState:)"))) __attribute__((objc_designated_initializer));
+- (NSString *)component1 __attribute__((swift_name("component1()"))) __attribute__((deprecated("use corresponding property instead")));
+- (int32_t)component2 __attribute__((swift_name("component2()"))) __attribute__((deprecated("use corresponding property instead")));
+- (BOOL)component3 __attribute__((swift_name("component3()"))) __attribute__((deprecated("use corresponding property instead")));
+- (UsecaseSetStageAsFavoriteParam *)doCopyUsername:(NSString *)username stageId:(int32_t)stageId favouriteState:(BOOL)favouriteState __attribute__((swift_name("doCopy(username:stageId:favouriteState:)")));
+- (BOOL)isEqual:(id _Nullable)other __attribute__((swift_name("isEqual(_:)")));
+- (NSUInteger)hash __attribute__((swift_name("hash()")));
+- (NSString *)description __attribute__((swift_name("description()")));
+@property (readonly) BOOL favouriteState __attribute__((swift_name("favouriteState")));
+@property (readonly) int32_t stageId __attribute__((swift_name("stageId")));
+@property (readonly) NSString *username __attribute__((swift_name("username")));
+@end;
+
+__attribute__((swift_name("RankeableStageRepository")))
+@protocol UsecaseRankeableStageRepository
+@required
+- (NSArray<UsecaseDomainRankeableStage *> *)refresh __attribute__((swift_name("refresh()")));
+@property (readonly) NSArray<UsecaseDomainRankeableStage *> *rankeableStages __attribute__((swift_name("rankeableStages")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("RankeableStageRepositoryImpl")))
+@interface UsecaseRankeableStageRepositoryImpl : UsecaseBase <UsecaseRankeableStageRepository>
+- (instancetype)initWithDataSource:(id<UsecaseReadOnlyDataSource>)dataSource __attribute__((swift_name("init(dataSource:)"))) __attribute__((objc_designated_initializer));
+- (NSArray<UsecaseDomainRankeableStage *> *)refresh __attribute__((swift_name("refresh()")));
+@property (readonly) NSArray<UsecaseDomainRankeableStage *> *rankeableStages __attribute__((swift_name("rankeableStages")));
+@end;
+
+__attribute__((swift_name("ClassificationRepository")))
+@protocol UsecaseClassificationRepository
+@required
+- (UsecaseDomainStageClassification *)getClassificationForStageStage:(NSString *)stage __attribute__((swift_name("getClassificationForStage(stage:)")));
+- (UsecaseDomainStageClassification *)refreshForStageStage:(NSString *)stage __attribute__((swift_name("refreshForStage(stage:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ClassificationRepositoryImpl")))
+@interface UsecaseClassificationRepositoryImpl : UsecaseBase <UsecaseClassificationRepository>
+- (instancetype)initWithApi:(id<UsecaseReadOnlyDataSourceWithFilter>)api db:(id<UsecaseWriteDataSourceWithFilter>)db __attribute__((swift_name("init(api:db:)"))) __attribute__((objc_designated_initializer));
+- (UsecaseDomainStageClassification *)getClassificationForStageStage:(NSString *)stage __attribute__((swift_name("getClassificationForStage(stage:)")));
+- (UsecaseDomainStageClassification *)refreshForStageStage:(NSString *)stage __attribute__((swift_name("refreshForStage(stage:)")));
+@end;
+
 __attribute__((swift_name("GetStagesUseCase")))
 @protocol UsecaseGetStagesUseCase
 @required
@@ -153,20 +264,20 @@ __attribute__((swift_name("GetStagesUseCase")))
 __attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("GetStagesUseCaseImpl")))
 @interface UsecaseGetStagesUseCaseImpl : UsecaseBase <UsecaseGetStagesUseCase>
-- (instancetype)initWithRepository:(id<UsecaseDataStageRepository>)repository __attribute__((swift_name("init(repository:)"))) __attribute__((objc_designated_initializer));
+- (instancetype)initWithRepository:(id<UsecaseStageRepository>)repository __attribute__((swift_name("init(repository:)"))) __attribute__((objc_designated_initializer));
 - (NSArray<UsecaseDomainStage *> *)invoke __attribute__((swift_name("invoke()")));
 @end;
 
 __attribute__((swift_name("SetStageAsFavoriteUseCase")))
 @protocol UsecaseSetStageAsFavoriteUseCase
 @required
-- (BOOL)invokeParam:(UsecaseDataSetStageAsFavoriteParam *)param __attribute__((swift_name("invoke(param:)")));
+- (BOOL)invokeParam:(UsecaseSetStageAsFavoriteParam *)param __attribute__((swift_name("invoke(param:)")));
 @end;
 
 __attribute__((swift_name("SetStageAsFavoriteUseCaseImpl")))
 @interface UsecaseSetStageAsFavoriteUseCaseImpl : UsecaseBase <UsecaseSetStageAsFavoriteUseCase>
-- (instancetype)initWithRepository:(id<UsecaseDataFavouritesRepository>)repository stageRepository:(id<UsecaseDataStageRepository>)stageRepository __attribute__((swift_name("init(repository:stageRepository:)"))) __attribute__((objc_designated_initializer));
-- (BOOL)invokeParam:(UsecaseDataSetStageAsFavoriteParam *)param __attribute__((swift_name("invoke(param:)")));
+- (instancetype)initWithRepository:(id<UsecaseFavouritesRepository>)repository stageRepository:(id<UsecaseStageRepository>)stageRepository __attribute__((swift_name("init(repository:stageRepository:)"))) __attribute__((objc_designated_initializer));
+- (BOOL)invokeParam:(UsecaseSetStageAsFavoriteParam *)param __attribute__((swift_name("invoke(param:)")));
 @end;
 
 __attribute__((swift_name("GetTopRankedStagesUseCase")))
@@ -178,7 +289,7 @@ __attribute__((swift_name("GetTopRankedStagesUseCase")))
 __attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("GetTopRankedStagesUseCaseImpl")))
 @interface UsecaseGetTopRankedStagesUseCaseImpl : UsecaseBase <UsecaseGetTopRankedStagesUseCase>
-- (instancetype)initWithRepository:(id<UsecaseDataRankeableStageRepository>)repository __attribute__((swift_name("init(repository:)"))) __attribute__((objc_designated_initializer));
+- (instancetype)initWithRepository:(id<UsecaseRankeableStageRepository>)repository __attribute__((swift_name("init(repository:)"))) __attribute__((objc_designated_initializer));
 - (NSArray<UsecaseDomainRankeableStage *> *)invoke __attribute__((swift_name("invoke()")));
 @end;
 
@@ -217,38 +328,6 @@ __attribute__((swift_name("DomainStage")))
 @property (readonly) NSString * _Nullable winner __attribute__((swift_name("winner")));
 @end;
 
-__attribute__((swift_name("DataStageRepository")))
-@protocol UsecaseDataStageRepository
-@required
-- (UsecaseDomainStage * _Nullable)getStageByIdStageId:(int32_t)stageId __attribute__((swift_name("getStageById(stageId:)")));
-- (NSArray<UsecaseDomainStage *> *)refresh __attribute__((swift_name("refresh()")));
-@property (readonly) NSArray<UsecaseDomainStage *> *stages __attribute__((swift_name("stages")));
-@end;
-
-__attribute__((objc_subclassing_restricted))
-__attribute__((swift_name("DataSetStageAsFavoriteParam")))
-@interface UsecaseDataSetStageAsFavoriteParam : UsecaseBase
-- (instancetype)initWithUsername:(NSString *)username stageId:(int32_t)stageId favouriteState:(BOOL)favouriteState __attribute__((swift_name("init(username:stageId:favouriteState:)"))) __attribute__((objc_designated_initializer));
-- (NSString *)component1 __attribute__((swift_name("component1()"))) __attribute__((deprecated("use corresponding property instead")));
-- (int32_t)component2 __attribute__((swift_name("component2()"))) __attribute__((deprecated("use corresponding property instead")));
-- (BOOL)component3 __attribute__((swift_name("component3()"))) __attribute__((deprecated("use corresponding property instead")));
-- (UsecaseDataSetStageAsFavoriteParam *)doCopyUsername:(NSString *)username stageId:(int32_t)stageId favouriteState:(BOOL)favouriteState __attribute__((swift_name("doCopy(username:stageId:favouriteState:)")));
-- (BOOL)isEqual:(id _Nullable)other __attribute__((swift_name("isEqual(_:)")));
-- (NSUInteger)hash __attribute__((swift_name("hash()")));
-- (NSString *)description __attribute__((swift_name("description()")));
-@property (readonly) BOOL favouriteState __attribute__((swift_name("favouriteState")));
-@property (readonly) int32_t stageId __attribute__((swift_name("stageId")));
-@property (readonly) NSString *username __attribute__((swift_name("username")));
-@end;
-
-__attribute__((swift_name("DataFavouritesRepository")))
-@protocol UsecaseDataFavouritesRepository
-@required
-- (NSArray<UsecaseDataSetStageAsFavoriteParam *> *)getFavouriteStagesByUsernameUsername:(NSString *)username __attribute__((swift_name("getFavouriteStagesByUsername(username:)")));
-- (UsecaseDataSetStageAsFavoriteParam * _Nullable)getStageByUsernameStageId:(int32_t)stageId username:(NSString *)username __attribute__((swift_name("getStageByUsername(stageId:username:)")));
-- (BOOL)setFavouriteStageParam:(UsecaseDataSetStageAsFavoriteParam *)param __attribute__((swift_name("setFavouriteStage(param:)")));
-@end;
-
 __attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("DomainRankeableStage")))
 @interface UsecaseDomainRankeableStage : UsecaseBase
@@ -263,11 +342,46 @@ __attribute__((swift_name("DomainRankeableStage")))
 @property (readonly) NSArray<NSString *> *voters __attribute__((swift_name("voters")));
 @end;
 
-__attribute__((swift_name("DataRankeableStageRepository")))
-@protocol UsecaseDataRankeableStageRepository
-@required
-- (NSArray<UsecaseDomainRankeableStage *> *)refresh __attribute__((swift_name("refresh()")));
-@property (readonly) NSArray<UsecaseDomainRankeableStage *> *rankeableStages __attribute__((swift_name("rankeableStages")));
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("DomainStageClassification")))
+@interface UsecaseDomainStageClassification : UsecaseBase
+- (instancetype)initWithMountain:(NSArray<UsecaseDomainClassification *> *)mountain team:(NSArray<UsecaseDomainClassification *> *)team general:(NSArray<UsecaseDomainClassification *> *)general regularity:(NSArray<UsecaseDomainClassification *> *)regularity stageClassification:(NSArray<UsecaseDomainClassification *> *)stageClassification stage:(NSString *)stage __attribute__((swift_name("init(mountain:team:general:regularity:stageClassification:stage:)"))) __attribute__((objc_designated_initializer));
+- (NSArray<UsecaseDomainClassification *> *)component1 __attribute__((swift_name("component1()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSArray<UsecaseDomainClassification *> *)component2 __attribute__((swift_name("component2()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSArray<UsecaseDomainClassification *> *)component3 __attribute__((swift_name("component3()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSArray<UsecaseDomainClassification *> *)component4 __attribute__((swift_name("component4()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSArray<UsecaseDomainClassification *> *)component5 __attribute__((swift_name("component5()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSString *)component6 __attribute__((swift_name("component6()"))) __attribute__((deprecated("use corresponding property instead")));
+- (UsecaseDomainStageClassification *)doCopyMountain:(NSArray<UsecaseDomainClassification *> *)mountain team:(NSArray<UsecaseDomainClassification *> *)team general:(NSArray<UsecaseDomainClassification *> *)general regularity:(NSArray<UsecaseDomainClassification *> *)regularity stageClassification:(NSArray<UsecaseDomainClassification *> *)stageClassification stage:(NSString *)stage __attribute__((swift_name("doCopy(mountain:team:general:regularity:stageClassification:stage:)")));
+- (BOOL)isEqual:(id _Nullable)other __attribute__((swift_name("isEqual(_:)")));
+- (NSUInteger)hash __attribute__((swift_name("hash()")));
+- (NSString *)description __attribute__((swift_name("description()")));
+@property NSArray<UsecaseDomainClassification *> *general __attribute__((swift_name("general")));
+@property NSArray<UsecaseDomainClassification *> *mountain __attribute__((swift_name("mountain")));
+@property NSArray<UsecaseDomainClassification *> *regularity __attribute__((swift_name("regularity")));
+@property NSString *stage __attribute__((swift_name("stage")));
+@property NSArray<UsecaseDomainClassification *> *stageClassification __attribute__((swift_name("stageClassification")));
+@property NSArray<UsecaseDomainClassification *> *team __attribute__((swift_name("team")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("DomainClassification")))
+@interface UsecaseDomainClassification : UsecaseBase
+- (instancetype)initWithTime:(NSString * _Nullable)time country:(NSString * _Nullable)country team:(NSString * _Nullable)team pos:(NSString * _Nullable)pos rider:(NSString * _Nullable)rider __attribute__((swift_name("init(time:country:team:pos:rider:)"))) __attribute__((objc_designated_initializer));
+- (NSString * _Nullable)component1 __attribute__((swift_name("component1()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSString * _Nullable)component2 __attribute__((swift_name("component2()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSString * _Nullable)component3 __attribute__((swift_name("component3()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSString * _Nullable)component4 __attribute__((swift_name("component4()"))) __attribute__((deprecated("use corresponding property instead")));
+- (NSString * _Nullable)component5 __attribute__((swift_name("component5()"))) __attribute__((deprecated("use corresponding property instead")));
+- (UsecaseDomainClassification *)doCopyTime:(NSString * _Nullable)time country:(NSString * _Nullable)country team:(NSString * _Nullable)team pos:(NSString * _Nullable)pos rider:(NSString * _Nullable)rider __attribute__((swift_name("doCopy(time:country:team:pos:rider:)")));
+- (BOOL)isEqual:(id _Nullable)other __attribute__((swift_name("isEqual(_:)")));
+- (NSUInteger)hash __attribute__((swift_name("hash()")));
+- (NSString *)description __attribute__((swift_name("description()")));
+@property NSString * _Nullable country __attribute__((swift_name("country")));
+@property NSString * _Nullable pos __attribute__((swift_name("pos")));
+@property NSString * _Nullable rider __attribute__((swift_name("rider")));
+@property NSString * _Nullable team __attribute__((swift_name("team")));
+@property NSString * _Nullable time __attribute__((swift_name("time")));
 @end;
 
 #pragma pop_macro("_Nullable_result")
